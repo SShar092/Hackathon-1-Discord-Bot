@@ -31,6 +31,20 @@ async def on_ready():
 async def ping(ctx):
     await ctx.send("Pong!")
 
+@bot.command()
+async def join(ctx):
+    # Check if the person using the command is in a voice channel
+    if ctx.author.voice is None:
+        await ctx.send("You need to join a voice channel first!")
+        return
+
+    channel = ctx.author.voice.channel
+
+    # Connect the bot to that voice channel
+    await channel.connect()
+
+    await ctx.send(f"Joined {channel.name}!")
+
 
 # Start the bot
 bot.run(TOKEN)
