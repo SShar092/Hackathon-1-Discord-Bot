@@ -1,14 +1,16 @@
 #bot.py
 
 import os
+import platform
 
 import discord
-import yt_dlp
+import yt_dlp   
 
 from discord.ext import commands
 from dotenv import load_dotenv
 
-discord.opus.load_opus("/opt/homebrew/opt/opus/lib/libopus.dylib")
+if platform.system() == "Darwin":
+    discord.opus.load_opus("/opt/homebrew/opt/opus/lib/libopus.dylib")
 
 # Load our .env file
 load_dotenv()
@@ -86,14 +88,49 @@ async def play(ctx, *, search):
         audio_url = info["url"]
         title = info.get("title", "Unknown song")
 
+    if platform.system() == "Darwin":
+        ffmpeg_cmd = "/opt/homebrew/bin/ffmpeg" # Mac
+    else:
+        ffmpeg_cmd = "ffmpeg.exe" # Windows
+
     source = discord.FFmpegPCMAudio(
         audio_url,
-        executable="/opt/homebrew/bin/ffmpeg",
+        executable= ffmpeg_cmd,
         before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
     )
 
     ctx.voice_client.play(source)
 
     await ctx.send(f"Now playing: **{title}**")
+
+@bot.command()
+async def pause(ctx):
+      #check if bot is in a voice channel
+         if ctx.voice_client is None:
+            await ctx.send("I am not conected to a voice channel!")
+            return
+
+         #check if there is currently any audio playing:
+         if ctx.voice_client.is_playing():
+             ctx.voice_client.pause()
+             await ctx.send("The song has been paused! " \
+             "To resume, type '!resume'")
+         else:
+             await ctx.send("⏸️There is no audio playing. ")
+
+@bot.command()
+async def resume(ctx):
+        #check if bot is in a voice channel
+         if ctx.voice_client is None:
+            await ctx.send("I am not conected to a voice channel!")
+            return
+        
+         #check if there is currently any audio playing:
+         if ctx.voice_client.is_playing():
+             await ctx.send("There is currently audio playing. ")
+         else:
+             ctx.voice_client.resume()
+             await ctx.send("▶️Audio Resumed! ")
+    
 # Start the bot
 bot.run(TOKEN)
